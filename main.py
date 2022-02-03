@@ -20,11 +20,14 @@ def update_objects():
 
 # Object classes
 class ball(object):
-    def __init__(self, init_x, init_y, speed):
-        self.x = init_x
-        self.y = init_y
-        self.speed = speed
+    def __init__(self, init_x, init_y, speed, mass=1):
+        self.x          = init_x
+        self.y          = init_y
+        self.init_y     = init_y
+        self.speed      = speed
+        self.mass       = mass
         self.time_alive = 0
+
         game_objects.append(self)
 
     def draw(self, x, y):
@@ -32,9 +35,10 @@ class ball(object):
 
     def update(self):
         self.time_alive = self.time_alive + TICKER_SPEED
-        #self.x = self.x + self.speed
+        self.x = self.x + self.speed
         # vf = g * t
-        self.y = self.y + (GRAVITY*self.time_alive)
+        if self.y < SCREEN_RES_Y-10:
+            self.y = self.y + (GRAVITY*self.time_alive)
         self.draw(self.x, self.y)
 
 # initialise objects
