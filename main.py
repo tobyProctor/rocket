@@ -1,6 +1,7 @@
 import pygame
 import sys
 import time
+import math
 
 # Game Vars
 SCREEN_RES_X = 1000
@@ -20,13 +21,14 @@ def update_objects():
 
 # Object classes
 class ball(object):
-    def __init__(self, init_x, init_y, speed, mass=1):
+    def __init__(self, init_x, init_y, speed, mass=1, stationary=False):
         self.x          = init_x
         self.y          = init_y
         self.init_y     = init_y
         self.speed      = speed
         self.mass       = mass
         self.time_alive = 0
+        self.stationary = stationary
 
         game_objects.append(self)
 
@@ -35,14 +37,24 @@ class ball(object):
 
     def update(self):
         self.time_alive = self.time_alive + TICKER_SPEED
-        self.x = self.x + self.speed
         # vf = g * t
-        if self.y < SCREEN_RES_Y-10:
-            self.y = self.y + (GRAVITY*self.time_alive)
+        if not self.stationary:
+            self.y = self.y + self.get_velocity()
+            print(self.get_velocity())
         self.draw(self.x, self.y)
+
+    def get_velocity(self):
+        for obj in game_objects:
+            dist = math.dist((self.x, self.y), (obj.x, obj.y))
+            if dist > 0:
+                force = GRAVITY*((self.mass*obj.mass)/dist**2)
+                acc = force / self.mass
+                return acc
+
 
 # initialise objects
 ball_0 = ball(500, 0, 1)
+ball_1 = ball(SCREEN_RES_Y/2, SCREEN_RES_X/2, 0, 1000, True)
 
 while True:
     # Game loop tick 60Hz
