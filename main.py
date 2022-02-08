@@ -11,7 +11,6 @@ GRAVITY = 9.8
 G = 6.67408 * (10 ** -11)  # Gravitational Constant
 TICKER_SPEED = 0.01
 game_objects = []
-ticker = 0
 
 # PyGame Init
 pygame.init()
@@ -72,24 +71,27 @@ class ball(object):
             self.x += acc_x
             self.y += acc_y
 
-# initialise objects
-ball_0 = ball(500, 0, 1, 0.1)
-ball_1 = ball(SCREEN_RES_Y/2, SCREEN_RES_X/2, 0, 1, True)
+def main():
+    # initialise objects
+    ball_0 = ball(500, 0, 1, 0.1)
+    ball_1 = ball(SCREEN_RES_Y/2, SCREEN_RES_X/2, 0, 1, True)
 
-while True:
-    # Game loop tick 60Hz
-    ticker = ticker + 1
-    time.sleep(TICKER_SPEED)
+    while True:
+        # Game loop tick 60Hz
+        time.sleep(TICKER_SPEED)
 
-    # Exit on close button
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+        # Exit on close button
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
-    screen.fill((255, 255, 255))
+        screen.fill((255, 255, 255))
 
-    # Update all game objects
-    update_objects()
+        # Update all game objects
+        update_objects()
 
-    pygame.display.flip()
+        pygame.display.flip()
+
+if __name__ == "__main__":
+    main()
