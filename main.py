@@ -2,11 +2,13 @@ import pygame
 import sys
 import time
 import math
+import numpy
 
 # Game Vars
 SCREEN_RES_X = 1000
 SCREEN_RES_Y = 1000
 GRAVITY = 9.8
+G = 6.67408 * (10 ** -11)  # Gravitational Constant
 TICKER_SPEED = 0.01
 game_objects = []
 ticker = 0
@@ -39,22 +41,40 @@ class ball(object):
         self.time_alive = self.time_alive + TICKER_SPEED
         # vf = g * t
         if not self.stationary:
-            self.y = self.y + self.get_velocity()
-            print(self.get_velocity())
+            self.get_velocity()
         self.draw(self.x, self.y)
 
     def get_velocity(self):
         for obj in game_objects:
-            dist = math.dist((self.x, self.y), (obj.x, obj.y))
-            if dist > 0:
-                force = GRAVITY*((self.mass*obj.mass)/dist**2)
-                acc = force / self.mass
-                return acc
+            x_dist = obj.x - self.x
+            y_dist = obj.y - self.y
 
+            vector_1 = [0, 1]
+            vector_2 = [1, 0]
+
+            unit_vector_1 = vector_1 / numpy.linalg.norm(vector_1)
+            unit_vector_2 = vector_2 / numpy.linalg.norm(vector_2)
+            dot_product = numpy.dot(unit_vector_1, unit_vector_2)
+            angle = numpy.arccos(dot_product)
+
+            print(angle)
+            dist = math.sqrt((x_dist**2) + (y_dist**2))
+            
+            if dist == 0:
+                dist = 0.0000001
+            
+            force = ((self.mass*obj.mass)/dist**2)
+
+            acceleration = force / self.mass
+            acc_x = acceleration * math.cos(angle)
+            acc_y = acceleration * math.sin(angle)
+            
+            self.x += acc_x
+            self.y += acc_y
 
 # initialise objects
-ball_0 = ball(500, 0, 1)
-ball_1 = ball(SCREEN_RES_Y/2, SCREEN_RES_X/2, 0, 1000, True)
+ball_0 = ball(500, 0, 1, 0.1)
+ball_1 = ball(SCREEN_RES_Y/2, SCREEN_RES_X/2, 0, 1, True)
 
 while True:
     # Game loop tick 60Hz
