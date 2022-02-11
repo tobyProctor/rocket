@@ -1,80 +1,149 @@
+import math
+import turtle
+import time
 import pygame
 import sys
-import time
-import math
-import numpy
 
-# Game Vars
-SCREEN_RES_X = 1000
-SCREEN_RES_Y = 1000
-GRAVITY = 9.8
-G = 6.67408 * (10 ** -11)  # Gravitational Constant
-TICKER_SPEED = 0.01
-game_objects = []
-
-# PyGame Init
+# Global defs
 pygame.init()
-screen = pygame.display.set_mode([SCREEN_RES_X, SCREEN_RES_Y])
+TICKER_SPEED = 0.02
+SCREEN_RES_X = 1400
+SCREEN_RES_Y = 900
 
-def update_objects():
-    for obj in game_objects:
-        obj.update()
+# Solar System Bodies
+class SolarSystemBody(turtle.Turtle):
+    min_display_size = 20
+    display_log_base = 1.1
 
-# Object classes
-class ball(object):
-    def __init__(self, init_x, init_y, speed, mass=1, stationary=False):
-        self.x          = init_x
-        self.y          = init_y
-        self.init_y     = init_y
-        self.speed      = speed
-        self.mass       = mass
-        self.time_alive = 0
-        self.stationary = stationary
+    def __init__(
+            self,
+            solar_system,
+            mass,
+            position=(0, 0),
+            velocity=(0, 0),
+    ):
+        super().__init__()
+        self.mass = mass
+        self.setposition(position)
+        self.velocity = velocity
+        self.display_size = max(
+            math.log(self.mass, self.display_log_base),
+            self.min_display_size,
+        )
+        solar_system.add_body(self)
 
-        game_objects.append(self)
+    def clear(self):
+        pygame.display.update()
+        
 
-    def draw(self, x, y):
-        pygame.draw.circle(screen, (0, 0, 255), (x, y), 10)        
+    def draw(self, screen):
+        self.clear()
+        screen.fill((0, 0, 0))
+        pygame.draw.circle(screen, (0, 0, 255), (self.xcor(), self.ycor()), 10)
 
-    def update(self):
-        self.time_alive = self.time_alive + TICKER_SPEED
-        # vf = g * t
-        if not self.stationary:
-            self.get_velocity()
-        self.draw(self.x, self.y)
+    def move(self):
+        self.setx(self.xcor() + self.velocity[0])
+        self.sety(self.ycor() + self.velocity[1])
 
-    def get_velocity(self):
-        for obj in game_objects:
-            x_dist = obj.x - self.x
-            y_dist = obj.y - self.y
 
-            vector_1 = [0, 1]
-            vector_2 = [1, 0]
+class Sun(SolarSystemBody):
+    def __init__(
+            self,
+            solar_system,
+            mass,
+            position=(0, 0),
+            velocity=(0, 0),
+    ):
+        super().__init__(solar_system, mass, position, velocity)
 
-            unit_vector_1 = vector_1 / numpy.linalg.norm(vector_1)
-            unit_vector_2 = vector_2 / numpy.linalg.norm(vector_2)
-            dot_product = numpy.dot(unit_vector_1, unit_vector_2)
-            angle = numpy.arccos(dot_product)
 
-            print(angle)
-            dist = math.sqrt((x_dist**2) + (y_dist**2))
-            
-            if dist == 0:
-                dist = 0.0000001
-            
-            force = ((self.mass*obj.mass)/dist**2)
+class Planet(SolarSystemBody):
 
-            acceleration = force / self.mass
-            acc_x = acceleration * math.cos(angle)
-            acc_y = acceleration * math.sin(angle)
-            
-            self.x += acc_x
-            self.y += acc_y
+    def __init__(
+            self,
+            solar_system,
+            mass,
+            position=(0, 0),
+            velocity=(0, 0),
+    ):
+        super().__init__(solar_system, mass, position, velocity)
+
+
+# Solar System
+class SolarSystem:
+    def __init__(self, width, height):
+        self.solar_system = turtle.Screen()
+        self.solar_system.setup(1, 1)
+
+        self.screen = pygame.display.set_mode([width, height])
+        self.screen.fill((0, 0, 0))
+
+        self.bodies = []
+
+    def add_body(self, body):
+        self.bodies.append(body)
+
+    def remove_body(self, body):
+        body.clear()
+        self.bodies.remove(body)
+
+    def update_all(self):
+        for body in self.bodies:
+            body.move()
+            body.draw(self.screen)            
+
+    @staticmethod
+    def accelerate_due_to_gravity(
+            first: SolarSystemBody,
+            second: SolarSystemBody,
+    ):
+        force = first.mass * second.mass / first.distance(second) ** 2
+        angle = first.towards(second)
+        reverse = 1
+        for body in first, second:
+            acceleration = force / body.mass
+            acc_x = acceleration * math.cos(math.radians(angle))
+            acc_y = acceleration * math.sin(math.radians(angle))
+            body.velocity = (
+                body.velocity[0] + (reverse * acc_x),
+                body.velocity[1] + (reverse * acc_y),
+            )
+            reverse = -1
+
+    def check_collision(self, first, second):
+        if isinstance(first, Planet) and isinstance(second, Planet):
+            return
+        if first.distance(second) < first.display_size/2 + second.display_size/2:
+            for body in first, second:
+                if isinstance(body, Planet):
+                    self.remove_body(body)
+
+    def calculate_all_body_interactions(self):
+        bodies_copy = self.bodies.copy()
+        for idx, first in enumerate(bodies_copy):
+            for second in bodies_copy[idx + 1:]:
+                self.accelerate_due_to_gravity(first, second)
+                self.check_collision(first, second)
+
 
 def main():
-    # initialise objects
-    ball_0 = ball(500, 0, 1, 0.1)
-    ball_1 = ball(SCREEN_RES_Y/2, SCREEN_RES_X/2, 0, 1, True)
+    solar_system = SolarSystem(width=SCREEN_RES_X, height=SCREEN_RES_Y)
+
+    sun = Sun(solar_system, mass=10_000, position=(SCREEN_RES_X/2, SCREEN_RES_Y/2))
+    planets = (
+        Planet(
+            solar_system,
+            mass=1,
+            position=(350, 450),
+            velocity=(0, 5),
+        ),
+        Planet(
+            solar_system,
+            mass=2,
+            position=(430, 450),
+            velocity=(0, 7),
+        ),
+    )
 
     while True:
         # Game loop tick 60Hz
@@ -86,12 +155,8 @@ def main():
                 pygame.quit()
                 sys.exit()
 
-        screen.fill((255, 255, 255))
-
-        # Update all game objects
-        update_objects()
-
-        pygame.display.flip()
+        solar_system.calculate_all_body_interactions()
+        solar_system.update_all()
 
 if __name__ == "__main__":
     main()
