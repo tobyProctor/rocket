@@ -130,10 +130,12 @@ class SolarSystem:
         #    print("No planet detected!")
         #    return
         if first.distance(second) < first.display_size + second.display_size:
-            self.combine_objects(first, second)
+            #revisit this, makes no sense
             if isinstance(first, Sun):
+                self.combine_objects(first, second)
                 self.remove_body(second)
             else:
+                self.combine_objects(second, first)
                 self.remove_body(first)
 
     def combine_objects(self, first, second):
