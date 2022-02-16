@@ -42,14 +42,13 @@ class SolarSystemBody(turtle.Turtle):
         )
         solar_system.add_body(self)
 
-    def clear(self):
-        pygame.display.update()
-        
-
-    def draw(self, screen):
-        self.clear()
+    def clear(self, screen):
         # Remove old x and y circle
         pygame.draw.circle(screen, COLOUR_BACKGROUND, (self.prev_x, self.prev_y), self.display_size)
+        pygame.draw.circle(screen, COLOUR_BACKGROUND, (self.xcor(), self.ycor()), self.display_size)
+
+    def draw(self, screen):
+        self.clear(screen)
         # Draw new x and y circle
         pygame.draw.circle(screen, self.colour, (self.xcor(), self.ycor()), self.display_size)
 
@@ -100,7 +99,7 @@ class SolarSystem:
         self.bodies.append(body)
 
     def remove_body(self, body):
-        body.clear()
+        body.clear(self.screen)
         self.bodies.remove(body)
 
     def update_all(self):
@@ -130,11 +129,20 @@ class SolarSystem:
         #if isinstance(first, Planet) and isinstance(second, Planet):
         #    print("No planet detected!")
         #    return
-        if first.distance(second) < first.display_size/2 + second.display_size/2:
-            print("Collision detected!")
-            for body in first, second:
-                if isinstance(body, Planet):
-                    self.remove_body(body)
+        if first.distance(second) < first.display_size + second.display_size:
+            self.combine_objects(first, second)
+            if isinstance(first, Sun):
+                self.remove_body(second)
+            else:
+                self.remove_body(first)
+
+    def combine_objects(self, first, second):
+        first.mass        = first.mass + second.mass
+        print("{} {}".format(first.velocity[0], second.velocity[0]))
+        #first.velocity = (
+        #        first.velocity[0] + second.velocity[0],
+        #        first.velocity[1] + second.velocity[1],
+        #    )
 
     def calculate_all_body_interactions(self):
         bodies_copy = self.bodies.copy()
@@ -181,6 +189,7 @@ def main():
 
         solar_system.calculate_all_body_interactions()
         solar_system.update_all()
+        pygame.display.update()
 
 if __name__ == "__main__":
     main()
