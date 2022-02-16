@@ -7,12 +7,18 @@ import sys
 # Global defs
 pygame.init()
 TICKER_SPEED = 0.02
+
 SCREEN_RES_X = 1400
 SCREEN_RES_Y = 900
 
+COLOUR_BACKGROUND = (12, 22, 79)
+COLOUR_DEFAULT = (0, 0, 255)
+COLOUR_SUN = (255, 255, 0)
+COLOUR_PLANT = (165, 42, 42)
+
 # Solar System Bodies
 class SolarSystemBody(turtle.Turtle):
-    min_display_size = 20
+    min_display_size = 5
     display_log_base = 1.1
 
     def __init__(
@@ -21,9 +27,13 @@ class SolarSystemBody(turtle.Turtle):
             mass,
             position=(0, 0),
             velocity=(0, 0),
+            colour=COLOUR_DEFAULT
     ):
         super().__init__()
+        self.prev_x = 0
+        self.prev_y = 0
         self.mass = mass
+        self.colour = colour
         self.setposition(position)
         self.velocity = velocity
         self.display_size = max(
@@ -38,10 +48,14 @@ class SolarSystemBody(turtle.Turtle):
 
     def draw(self, screen):
         self.clear()
-        screen.fill((0, 0, 0))
-        pygame.draw.circle(screen, (0, 0, 255), (self.xcor(), self.ycor()), 10)
+        # Remove old x and y circle
+        pygame.draw.circle(screen, COLOUR_BACKGROUND, (self.prev_x, self.prev_y), self.display_size)
+        # Draw new x and y circle
+        pygame.draw.circle(screen, self.colour, (self.xcor(), self.ycor()), self.display_size)
 
     def move(self):
+        self.prev_x = self.xcor()
+        self.prev_y = self.ycor()
         self.setx(self.xcor() + self.velocity[0])
         self.sety(self.ycor() + self.velocity[1])
 
@@ -53,8 +67,9 @@ class Sun(SolarSystemBody):
             mass,
             position=(0, 0),
             velocity=(0, 0),
+            colour=COLOUR_SUN
     ):
-        super().__init__(solar_system, mass, position, velocity)
+        super().__init__(solar_system, mass, position, velocity, colour)
 
 
 class Planet(SolarSystemBody):
@@ -65,8 +80,9 @@ class Planet(SolarSystemBody):
             mass,
             position=(0, 0),
             velocity=(0, 0),
+            colour=COLOUR_PLANT
     ):
-        super().__init__(solar_system, mass, position, velocity)
+        super().__init__(solar_system, mass, position, velocity, colour)
 
 
 # Solar System
@@ -76,7 +92,7 @@ class SolarSystem:
         self.solar_system.setup(1, 1)
 
         self.screen = pygame.display.set_mode([width, height])
-        self.screen.fill((0, 0, 0))
+        self.screen.fill(COLOUR_BACKGROUND)
 
         self.bodies = []
 
@@ -111,9 +127,11 @@ class SolarSystem:
             reverse = -1
 
     def check_collision(self, first, second):
-        if isinstance(first, Planet) and isinstance(second, Planet):
-            return
+        #if isinstance(first, Planet) and isinstance(second, Planet):
+        #    print("No planet detected!")
+        #    return
         if first.distance(second) < first.display_size/2 + second.display_size/2:
+            print("Collision detected!")
             for body in first, second:
                 if isinstance(body, Planet):
                     self.remove_body(body)
@@ -143,11 +161,17 @@ def main():
             position=(430, 450),
             velocity=(0, 7),
         ),
+        Planet(
+            solar_system,
+            mass=300,
+            position=(275, 450),
+            velocity=(0, 3),
+        ),
     )
 
     while True:
         # Game loop tick 60Hz
-        time.sleep(TICKER_SPEED)
+        #time.sleep(TICKER_SPEED)
 
         # Exit on close button
         for event in pygame.event.get():
