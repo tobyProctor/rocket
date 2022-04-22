@@ -126,9 +126,6 @@ class SolarSystem:
             reverse = -1
 
     def check_collision(self, first, second):
-        #if isinstance(first, Planet) and isinstance(second, Planet):
-        #    print("No planet detected!")
-        #    return
         if first.distance(second) < first.display_size + second.display_size:
             #revisit this, makes no sense
             if isinstance(first, Sun):
