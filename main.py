@@ -141,10 +141,6 @@ class SolarSystem:
     def combine_objects(self, first, second):
         first.mass        = first.mass + second.mass
         print("{} {}".format(first.velocity[0], second.velocity[0]))
-        #first.velocity = (
-        #        first.velocity[0] + second.velocity[0],
-        #        first.velocity[1] + second.velocity[1],
-        #    )
 
     def calculate_all_body_interactions(self):
         bodies_copy = self.bodies.copy()
